@@ -59,8 +59,6 @@ with DAG(
         provide_context=True,
     )
 
-
-
     end = EmptyOperator(task_id="fin")
 
     start >> tarea_estilo_y_pintores >> tarea_prompt >> end
