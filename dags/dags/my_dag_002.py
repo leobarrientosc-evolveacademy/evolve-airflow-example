@@ -38,6 +38,24 @@ def _prompt(**kwargs):
     prompt =  "Generate an painting about " + estilo + " like " + pintor_1 + " or " + pintor_2 + "."
     kwargs['ti'].xcom_push(key='prompt', value=prompt)
 
+def _guardar_texto_en_fichero(**kwargs):
+  
+  nombre_fichero = "prompts/prompts.txt"
+  texto = kwargs['ti'].xcom_pull(task_ids='obtener_prompt', key='prompt')
+  """
+  Guarda una cadena de texto en un fichero.
+
+  Args:
+    nombre_fichero: El nombre del fichero en el que se guardará el texto.
+    texto: La cadena de texto que se va a guardar.
+  """
+  try:
+    with open(nombre_fichero, 'w') as fichero:
+      fichero.write(texto)
+    print(f"El texto se ha guardado correctamente en {nombre_fichero}")
+  except Exception as e:
+    print(f"Ha ocurrido un error al guardar el texto: {e}")
+
 with DAG(
     dag_id="estilo_y_pintores_aleatorios",
     start_date=datetime(2023, 10, 26),
@@ -59,6 +77,12 @@ with DAG(
         provide_context=True,
     )
 
+    tarea_guardar_prompt = PythonOperator(
+        task_id="guardar_prompt",
+        python_callable=_guardar_texto_en_fichero,
+        provide_context=True
+    )
+
     end = EmptyOperator(task_id="fin")
 
-    start >> tarea_estilo_y_pintores >> tarea_prompt >> end
+    start >> tarea_estilo_y_pintores >> tarea_prompt >> tarea_guardar_prompt >> end
