@@ -1,3 +1,4 @@
 .env
 dags/logs
 Pipfile.lock
+prompts.txt
