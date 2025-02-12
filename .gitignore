@@ -1,4 +1,8 @@
 .env
-dags/logs
+airflow/logs
 Pipfile.lock
-prompts.txt
+airflow/standalone_admin_password.txt
+airflow/airflow.db
+airflow/airflow-webserver.pid
+airflow/airflow.cfg
+airflow/webserver_config.py
