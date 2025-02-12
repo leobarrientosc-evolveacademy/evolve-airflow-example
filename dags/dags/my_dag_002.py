@@ -40,7 +40,7 @@ def _prompt(**kwargs):
 
 def _guardar_texto_en_fichero(**kwargs):
   
-  nombre_fichero = "prompts/prompts.txt"
+  nombre_fichero = "prompts.txt"
   texto = kwargs['ti'].xcom_pull(task_ids='obtener_prompt', key='prompt')
   """
   Guarda una cadena de texto en un fichero.
