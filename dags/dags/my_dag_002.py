@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import random
 from datetime import datetime
+from google.cloud import aiplatform
+from google.cloud import storage
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
@@ -56,6 +58,46 @@ def _guardar_texto_en_fichero(**kwargs):
   except Exception as e:
     print(f"Ha ocurrido un error al guardar el texto: {e}")
 
+
+def _generar_imagen(**kwargs):
+    """
+    Genera una imagen utilizando Vertex AI Vision y la almacena en un bucket de GCS.
+
+    Args:
+        prompt: El prompt para la generación de la imagen.
+        bucket_name: El nombre del bucket de GCS.
+        nombre_archivo: El nombre del archivo para la imagen en el bucket.
+    """
+
+    # Ejemplo de uso
+    prompt = kwargs['ti'].xcom_pull(task_ids='obtener_prompt', key='prompt')
+    bucket_name = "us-central1-airflow-001-9fbf403d-bucket"
+    nombre_archivo = "data/imagen_generada.png"
+
+    # Inicializa el cliente de Vertex AI
+    aiplatform.init(project="airflow-at-gcp", location="us-west1")
+
+    # Define el modelo de generación de imágenes (ajusta según tus necesidades)
+    model_name = "imagen-3.0-generate-002"
+    model = aiplatform.Model(model_name)
+
+    # Crea la solicitud de generación de imagen
+    response = model.predict(prompt=prompt)
+
+    # Obtiene la imagen generada
+    image_bytes = response.predictions[0].image_bytes
+
+    # Inicializa el cliente de GCS
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(nombre_archivo)
+
+    # Sube la imagen al bucket
+    blob.upload_from_string(image_bytes, content_type="image/png")  # Ajusta el tipo de contenido si es necesario
+
+    print(f"Imagen generada y almacenada en gs://{bucket_name}/{nombre_archivo}")
+
+
 with DAG(
     dag_id="estilo_y_pintores_aleatorios",
     start_date=datetime(2023, 10, 26),
@@ -83,6 +125,12 @@ with DAG(
         provide_context=True
     )
 
+    tarea_generar_imagen = PythonOperator(
+       task_id="generar_imagen",
+       python_callable=_generar_imagen,
+       provide_context=True
+    )
+
     end = EmptyOperator(task_id="fin")
 
-    start >> tarea_estilo_y_pintores >> tarea_prompt >> tarea_guardar_prompt >> end
+    start >> tarea_estilo_y_pintores >> tarea_prompt >> tarea_guardar_prompt >> tarea_generar_imagen >> end
