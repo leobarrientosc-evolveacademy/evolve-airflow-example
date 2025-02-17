@@ -4,8 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-apache-airflow = "*"
 pendulum = "*"
+google-cloud-storage = "*"
+apache-airflow = {extras = ["google"], version = "*"}
+google-cloud-aiplatform = {extras = ["evaluation"], version = "*"}
+tqdm = "*"
 
 [dev-packages]
 
